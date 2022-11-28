@@ -75,7 +75,7 @@ bptest(reg)
 flats_ordered = arrange(flats, kitsp)
 reg_gqtest = lm(price ~ livesp + kitsp + dist + metrdist,
                 data = flats_ordered)
-gqtest(reg_gqtest, fraction = 0.3) # посередине отсортированного ряда лежит 34% наблюдений
+gqtest(reg_gqtest, fraction = 0.3) # посередине отсортированного ряда лежит 30% наблюдений
 
 
 # Будет также полезным познакомиться с методами борьбы с гетероскедастичностью.
