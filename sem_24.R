@@ -2,8 +2,8 @@
 # ETS-модели.
 
 library(tidyverse) # обработка данных
-library(fpp3) # куча плюшек для рядов
-library(lubridate) # куча плюшек для рядов
+library(fpp3) # работа с рядами
+library(lubridate) # работа с рядами
 library(rio) # импорт данных
 library(ggrepel) # симпатичные подписи
 library(ggplot2) # графики
@@ -43,7 +43,6 @@ unemp_test =  filter(unemp_rf,
                      (date >= ymd('2018-04-01')))
 
 
-
 mod1 = model(unemp_train,
                     snaive = SNAIVE(total),
                     ets_ann = ETS(total ~ error('A') + trend('N') + season('N')),
@@ -74,7 +73,7 @@ comp = model(unemp_train,
 comp
 tail(comp)
 
-# Создание моделей на базе существующих
+# Задание 2. Создание моделей на базе существующих
 # Преобразование данных
 
 # Исходный ряд
@@ -131,18 +130,18 @@ accuracy(fcst3, unemp_rf) %>%
        arrange(RMSE)
 
 
-# Кросс-валидация
-unemp_stretch = stretch_tsibble(unemp_rf,
-                               .init = 120, .step = 2)
+# Задание 3. Кросс-валидация
+# Кросс-валидация скользящим окном: наблюдений много и мы подозреваем, что зависимость изменяется
+unemp_slide = slide_tsibble(unemp_rf,
+                            .size = 120, .step = 2)
+unemp_slide
 
-unemp_stretch
-
-mod4 = model(unemp_stretch,
-                    snaive = SNAIVE(total),
-                    ets_aaa = ETS(total ~ error('A') + trend('A') + season('A')),
-                    ets_ana = ETS(total ~ error('A') + trend('N') + season('A')),
-                    ets_aaa_bc = ETS(box_cox(total, lambda) ~ error('A') + trend('A') + season('A')),
-                    ets_ana_bc = ETS(box_cox(total, lambda) ~ error('A') + trend('N') + season('A'))
+mod4 = model(unemp_slide,
+             snaive = SNAIVE(total),
+             ets_aaa = ETS(total ~ error('A') + trend('A') + season('A')),
+             ets_ana = ETS(total ~ error('A') + trend('N') + season('A')),
+             ets_aaa_bc = ETS(box_cox(total, lambda) ~ error('A') + trend('A') + season('A')),
+             ets_ana_bc = ETS(box_cox(total, lambda) ~ error('A') + trend('N') + season('A'))
 )
 
 mod4
@@ -150,4 +149,25 @@ mod4
 fcst4 = forecast(mod4, h = 1)
 
 accuracy(fcst4, unemp_rf)  %>%
+  arrange(RMSE)
+
+# Кросс-валидация растущим окном: наблюдений мало и мы подозреваем, что зависимость меняется во времени
+unemp_stretch = stretch_tsibble(unemp_rf,
+                               .init = 120, .step = 2)
+
+unemp_stretch
+
+mod5 = model(unemp_stretch,
+                    snaive = SNAIVE(total),
+                    ets_aaa = ETS(total ~ error('A') + trend('A') + season('A')),
+                    ets_ana = ETS(total ~ error('A') + trend('N') + season('A')),
+                    ets_aaa_bc = ETS(box_cox(total, lambda) ~ error('A') + trend('A') + season('A')),
+                    ets_ana_bc = ETS(box_cox(total, lambda) ~ error('A') + trend('N') + season('A'))
+)
+
+mod5
+
+fcst5 = forecast(mod5, h = 1)
+
+accuracy(fcst5, unemp_rf)  %>%
   arrange(RMSE)
