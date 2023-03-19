@@ -1,8 +1,6 @@
 # Семинар 24.
 # ETS-модели.
 
-install.packages("devtools") # позволяет устанавливать и собирать пакеты с GitHub
-
 library(tidyverse) # обработка данных
 library(fpp3) # куча плюшек для рядов
 library(lubridate) # куча плюшек для рядов
@@ -10,11 +8,10 @@ library(rio) # импорт данных
 library(ggrepel) # симпатичные подписи
 library(ggplot2) # графики
 library(patchwork) # расположение графиков
-library(latex2exp) # красивые формулы
 
 setwd('/Users/polinapogorelova/Desktop/АВР') # установка рабочей директории
 
-# Задание 2. Модели экспоненциального сглаживания.
+# Задание 1. Модели экспоненциального сглаживания.
 unemp = import("unemployments.csv")
 
 unemp = mutate(unemp,
@@ -36,7 +33,7 @@ unemp_rf = mutate(unemp_rf,
                   total = total/1000)
 
 
-unemp_rf %>% gg_tsdisplay(total)
+unemp_rf %>% gg_tsdisplay(total, plot_type = "partial")
 
 
 unemp_train = filter(unemp_rf,
@@ -67,13 +64,15 @@ accuracy(fcst1, unemp_rf) %>%
          select(.model, RMSE, MAE, MAPE, MASE) %>%
          arrange(RMSE)
 
-autoplot(fcst1) +
-  autolayer(unemp_train) +
-  autolayer(unemp_test) +
+autoplot(fcst1,
+  filter(unemp_rf, year(date) > 2015)) +
   labs(title = "Прогноз числа безработных в РФ (тыс.чел.)", y = "")
 
 comp = model(unemp_train,
              ets_ana = ETS(total ~ error('A') + trend('N') + season('A'))) %>% components()
+
+comp
+tail(comp)
 
 # Создание моделей на базе существующих
 # Преобразование данных
@@ -97,10 +96,7 @@ unemp_rf %>%
     autoplot(box_cox(total, lambda))
 
 p3 = unemp_rf %>%
-  autoplot(box_cox(total, lambda)) +
-  labs(title = latex2exp::TeX(paste0(
-    "Результат преобразованния Бокса-Кокса ряда безработицы при $\\lambda$ = ",
-    round(lambda,2))), y = "")
+  autoplot(box_cox(total, lambda))
 
 p1 / (p2 + p3) + plot_annotation(title = "Исходный и преобразованные ряды безработицы в РФ" )
 
